@@ -53,23 +53,26 @@ const UserEditScreen = () => {
         e.preventDefault()
         try {
             const userRoles = [];
-            if (roles.isAdmin) userRoles.push({ name: 'Admin' });
-            if (roles.isSalesperson) userRoles.push({ name: 'Salesperson' });
-            if (roles.isEditor) userRoles.push({ name: 'Editor' });
-            if (roles.isShipper) userRoles.push({ name: 'Shipper' });
-            if (roles.isAssistant) userRoles.push({ name: 'Assistant' });
+            // Map names alongside matching relational database table primary key IDs
+            if (roles.isAdmin) userRoles.push({ id: 1, name: 'Admin' });
+            if (roles.isSalesperson) userRoles.push({ id: 2, name: 'Salesperson' });
+            if (roles.isEditor) userRoles.push({ id: 3, name: 'Editor' });
+            if (roles.isShipper) userRoles.push({ id: 4, name: 'Shipper' });
+            if (roles.isAssistant) userRoles.push({ id: 5, name: 'Assistant' });
+
             await updateUser({
-                id: userId, firstName, lastName, email, roles: userRoles,
+                id: userId,
+                firstName,
+                lastName,
+                email,
+                roles: userRoles,
                 enabled
-            })
-            if (enabled !== initialEnabled) {
-                await updateUserStatus({ id: userId, enabled })
-            }
-            toast.success('User updated successfully')
-            refetch()
-            navigate('/admin/userlist')
+            }).unwrap(); // Added unwrap to catch backend problems properly
+
+            toast.success('User updated successfully');
+            navigate('/admin/userlist');
         } catch (err) {
-            toast.error(err?.data?.message || err.error)
+            toast.error(err?.data?.message || err.error || 'Failed to update user');
         }
     }
     return (
@@ -80,68 +83,72 @@ const UserEditScreen = () => {
                 {
                     loadingUpdate && <Loader />
                 }
-                {
-                    isLoading ? <Loader /> : error ? <Message
-                        variant='danger'>{error}</Message> : (
-                        <Form onSubmit={submitHandler}>
-                            <Form.Group controlId='firstName' className='my-2'>
-                                <Form.Label>First Name</Form.Label>
-                                <Form.Control type='text' placeholder='Enter first name'
-                                    value={firstName} onChange={(e) => setFirstName(e.target.value)}></Form.Control>
-                            </Form.Group>
-                            <Form.Group controlId='lastName' className='my-2'>
-                                <Form.Label>Last Name</Form.Label>
-                                <Form.Control type='text' placeholder='Enter last name'
-                                    value={lastName} onChange={(e) => setLastName(e.target.value)}></Form.Control>
-                            </Form.Group>
-                            <Form.Group controlId='email' className='my-2'>
-                                <Form.Label>Email Address</Form.Label>
-                                <Form.Control type='email' placeholder='Enter email'
-                                    value={email} onChange={(e) => setEmail(e.target.value)}></Form.Control>
-                            </Form.Group>
-                            <Form.Group controlId='isAdmin' className='my-2'>
-                                <Form.Check type='checkbox' label='Admin'
-                                    checked={roles.isAdmin} onChange={(e) => setRoles({
-                                        ...roles, isAdmin:
-                                            e.target.checked
-                                    })}></Form.Check>
-                            </Form.Group>
-                            <Form.Group controlId='isSalesperson' className='my-2'>
-                                <Form.Check type='checkbox' label='Salesperson'
-                                    checked={roles.isSalesperson} onChange={(e) => setRoles({
-                                        ...roles, isSalesperson:
-                                            e.target.checked
-                                    })}></Form.Check>
-                            </Form.Group>
-                            <Form.Group controlId='isEditor' className='my-2'>
-                                <Form.Check type='checkbox' label='Editor'
-                                    checked={roles.isEditor} onChange={(e) => setRoles({
-                                        ...roles, isEditor:
-                                            e.target.checked
-                                    })}></Form.Check>
-                            </Form.Group>
-                            <Form.Group controlId='isShipper' className='my-2'>
-                                <Form.Check type='checkbox' label='Shipper'
-                                    checked={roles.isShipper} onChange={(e) => setRoles({
-                                        ...roles, isShipper:
-                                            e.target.checked
-                                    })}></Form.Check>
-                            </Form.Group>
-                            <Form.Group controlId='isAssistant' className='my-2'>
-                                <Form.Check type='checkbox' label='Assistant'
-                                    checked={roles.isAssistant} onChange={(e) => setRoles({
-                                        ...roles, isAssistant:
-                                            e.target.checked
-                                    })}></Form.Check>
-                            </Form.Group>
-                            <Form.Group controlId='enabled' className='my-2'>
-                                <Form.Check type='checkbox' label='Enabled'
-                                    checked={enabled} onChange={(e) => setEnabled(e.target.checked)}></Form.Check>
-                            </Form.Group>
-                            <Button type='submit' variant='primary'
-                                className='my-2'>Update</Button>
-                        </Form>
-                    )
+                {isLoading ? (
+                    <Loader />
+                ) : error ? (
+                    <Message variant='danger'>
+                        {error.data?.message || error.error || `Error status: ${error.status}`}
+                    </Message>
+                ) : (
+                    <Form onSubmit={submitHandler}>
+                        <Form.Group controlId='firstName' className='my-2'>
+                            <Form.Label>First Name</Form.Label>
+                            <Form.Control type='text' placeholder='Enter first name'
+                                value={firstName} onChange={(e) => setFirstName(e.target.value)}></Form.Control>
+                        </Form.Group>
+                        <Form.Group controlId='lastName' className='my-2'>
+                            <Form.Label>Last Name</Form.Label>
+                            <Form.Control type='text' placeholder='Enter last name'
+                                value={lastName} onChange={(e) => setLastName(e.target.value)}></Form.Control>
+                        </Form.Group>
+                        <Form.Group controlId='email' className='my-2'>
+                            <Form.Label>Email Address</Form.Label>
+                            <Form.Control type='email' placeholder='Enter email'
+                                value={email} onChange={(e) => setEmail(e.target.value)}></Form.Control>
+                        </Form.Group>
+                        <Form.Group controlId='isAdmin' className='my-2'>
+                            <Form.Check type='checkbox' label='Admin'
+                                checked={roles.isAdmin} onChange={(e) => setRoles({
+                                    ...roles, isAdmin:
+                                        e.target.checked
+                                })}></Form.Check>
+                        </Form.Group>
+                        <Form.Group controlId='isSalesperson' className='my-2'>
+                            <Form.Check type='checkbox' label='Salesperson'
+                                checked={roles.isSalesperson} onChange={(e) => setRoles({
+                                    ...roles, isSalesperson:
+                                        e.target.checked
+                                })}></Form.Check>
+                        </Form.Group>
+                        <Form.Group controlId='isEditor' className='my-2'>
+                            <Form.Check type='checkbox' label='Editor'
+                                checked={roles.isEditor} onChange={(e) => setRoles({
+                                    ...roles, isEditor:
+                                        e.target.checked
+                                })}></Form.Check>
+                        </Form.Group>
+                        <Form.Group controlId='isShipper' className='my-2'>
+                            <Form.Check type='checkbox' label='Shipper'
+                                checked={roles.isShipper} onChange={(e) => setRoles({
+                                    ...roles, isShipper:
+                                        e.target.checked
+                                })}></Form.Check>
+                        </Form.Group>
+                        <Form.Group controlId='isAssistant' className='my-2'>
+                            <Form.Check type='checkbox' label='Assistant'
+                                checked={roles.isAssistant} onChange={(e) => setRoles({
+                                    ...roles, isAssistant:
+                                        e.target.checked
+                                })}></Form.Check>
+                        </Form.Group>
+                        <Form.Group controlId='enabled' className='my-2'>
+                            <Form.Check type='checkbox' label='Enabled'
+                                checked={enabled} onChange={(e) => setEnabled(e.target.checked)}></Form.Check>
+                        </Form.Group>
+                        <Button type='submit' variant='primary'
+                            className='my-2'>Update</Button>
+                    </Form>
+                )
 
                 }
             </FormContainer>
